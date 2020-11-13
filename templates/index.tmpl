@@ -6,7 +6,6 @@
     input[type=button],
     input[type=submit],
     input[type=reset]{
-        background-color: #4CAF50;
         border: none;
         color: white;
         padding: 16px 32px;
@@ -19,20 +18,31 @@
         width: 100%;
         margin-bottom: 1em;
     }
+
+    .submit-btn {
+        background-color: #4CAF50;
+    }
 </style>
 
-<div class="container centered">
-    <h3>MOB</h3>
+<script>
+    function logout() {
+        document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        window.location = "/logout";
+    }
+</script>
 
+<div class="container centered">
     <img class="avatar" src="{{ .picture }}"/>
     <h2>Welcome {{ .name }}</h2>
+    <button onclick="logout()">Logout</button>
 
     <form action="/submit" method="post">
         <label>
-            <textarea name="letter" cols="50" rows="25"></textarea>
+            <textarea name="letter" cols="50" rows="25" autofocus></textarea>
         </label>
         <br/>
-        <input type="submit" name="submit" value="Submit" />
+        <input type="submit" name="submit" value="Save Draft" />
+        <input class="submit-btn" type="submit" name="submit" value="Submit" />
     </form>
 </div>
 

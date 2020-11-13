@@ -10,8 +10,10 @@ import (
 	"github.com/racirx/mob/authentication"
 	"github.com/racirx/mob/config"
 	"go.uber.org/zap"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -67,13 +69,25 @@ func (a *Application) Initialize(conf *config.Config) {
 	r.POST("/submit", func(c *gin.Context) {
 		form := new(Form)
 
+		version := "final"
+		if c.PostForm("submit") == "Save Draft" {
+			version = "draft"
+		}
+
 		if err := c.ShouldBind(form); err != nil {
 			logger.Sugar().Infof("post route: %v\n", err)
-			c.Redirect(http.StatusTemporaryRedirect, "/")
+			c.Redirect(http.StatusMovedPermanently, "/")
 			return
 		}
 
-		c.Redirect(http.StatusTemporaryRedirect, "/")
+		err = ioutil.WriteFile(fmt.Sprintf("letters/%s/mob_%d.txt", version, time.Now().Unix()), []byte(form.Letter), os.ModePerm)
+		if err != nil {
+			logger.Sugar().Errorf("post route: %v\n", err)
+			c.Redirect(http.StatusMovedPermanently, "/")
+			return
+		}
+
+		c.Redirect(http.StatusMovedPermanently, "/")
 	})
 
 	auth, err := conf.Authenticator.Config.Open(logger)
