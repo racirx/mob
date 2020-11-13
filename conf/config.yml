@@ -1,0 +1,15 @@
+server:
+  port: 8080
+  key: $KEY
+  logger:
+    level: debug
+    encoding: console
+
+authenticator:
+  type: auth0
+  config:
+    issuer: $ISSUER
+    clientId: $CLIENT_ID
+    clientSecret: $CLIENT_SECRET
+    redirectUrl: $REDIRECT_URL
+    scopes: openid profile email
