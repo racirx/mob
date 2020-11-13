@@ -13,3 +13,4 @@ authenticator:
     clientSecret: $CLIENT_SECRET
     redirectUrl: $REDIRECT_URL
     scopes: openid profile email
+    logoutUri: /v2/logout

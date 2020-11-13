@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"github.com/coreos/go-oidc"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -11,6 +12,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -20,6 +22,7 @@ type Config struct {
 	ClientSecret string `json:"clientSecret"`
 	RedirectURL  string `json:"redirectUrl"`
 	Scopes       string `json:"scopes"`
+	LogoutUri    string `json:"logoutUri"`
 }
 
 func (c *Config) Open(logger *zap.Logger) (authentication.Provider, error) {
@@ -41,18 +44,20 @@ func (c *Config) Open(logger *zap.Logger) (authentication.Provider, error) {
 
 	return &Auth0{
 		IdentityProvider: provider,
-		Config:           conf,
+		OauthConfig:      conf,
 		Ctx:              ctx,
 		Logger:           logger,
+		config:           c,
 	}, nil
 
 }
 
 type Auth0 struct {
 	IdentityProvider *oidc.Provider
-	Config           oauth2.Config
+	OauthConfig      oauth2.Config
 	Ctx              context.Context
 	Logger           *zap.Logger
+	config           *Config
 }
 
 func (a *Auth0) Login(ctx *gin.Context) {
@@ -78,11 +83,41 @@ func (a *Auth0) Login(ctx *gin.Context) {
 		return
 	}
 
-	ctx.Redirect(http.StatusTemporaryRedirect, a.Config.AuthCodeURL(state))
+	ctx.Redirect(http.StatusTemporaryRedirect, a.OauthConfig.AuthCodeURL(state))
 }
 
 func (a *Auth0) Logout(ctx *gin.Context) {
+	var scheme string
+	if ctx.Request.TLS == nil {
+		scheme = "http"
+	} else {
+		scheme = "https"
+	}
 
+	returnTo, err := url.Parse(fmt.Sprintf("%s://%s", scheme, ctx.Request.Host))
+	if err != nil {
+		a.Logger.Sugar().Errorf("auth0: %v", err)
+		ctx.HTML(http.StatusInternalServerError, "index.tmpl", gin.H{
+			"error": "Error Logging out",
+		})
+		return
+	}
+
+	logoutUrl, err := url.Parse(a.config.Issuer + a.config.LogoutUri)
+	if err != nil {
+		a.Logger.Sugar().Errorf("auth0: %v", err)
+		ctx.HTML(http.StatusInternalServerError, "index.tmpl", gin.H{
+			"error": "Error Logging out",
+		})
+		return
+	}
+
+	q := logoutUrl.Query()
+	q.Add("returnTo", returnTo.String())
+	q.Add("client_id", a.OauthConfig.ClientID)
+	logoutUrl.RawQuery = q.Encode()
+
+	ctx.Redirect(http.StatusTemporaryRedirect, logoutUrl.String())
 }
 
 func (a *Auth0) Callback(ctx *gin.Context) {
@@ -108,7 +143,7 @@ func (a *Auth0) Callback(ctx *gin.Context) {
 		return
 	}
 
-	token, err := a.Config.Exchange(context.TODO(), code)
+	token, err := a.OauthConfig.Exchange(context.TODO(), code)
 	if err != nil {
 		a.Logger.Sugar().Errorf("auth0: %v", err)
 		ctx.HTML(http.StatusUnauthorized, "index.tmpl", gin.H{
@@ -126,7 +161,7 @@ func (a *Auth0) Callback(ctx *gin.Context) {
 		return
 	}
 
-	oidcConfig := &oidc.Config{ClientID: a.Config.ClientID}
+	oidcConfig := &oidc.Config{ClientID: a.OauthConfig.ClientID}
 
 	idToken, err := a.IdentityProvider.Verifier(oidcConfig).Verify(context.TODO(), rawIdToken)
 	if err != nil {
