@@ -48,7 +48,8 @@ func (a *Application) Initialize(conf *config.Config) {
 	r.Use(ginzap.Ginzap(logger, time.RFC3339, false))
 	r.Use(ginzap.RecoveryWithZap(logger, true))
 
-	r.LoadHTMLGlob("templates/*")
+	r.Static("/static", "./web/static")
+	r.LoadHTMLGlob("web/templates/*")
 
 	gob.Register(map[string]interface{}{})
 	r.Use(sessions.Sessions("session", cookie.NewStore([]byte(conf.ServerConfig.Key))))
@@ -90,7 +91,7 @@ func (a *Application) Initialize(conf *config.Config) {
 		c.Redirect(http.StatusMovedPermanently, "/")
 	})
 
-	auth, err := conf.Authenticator.Config.Open(logger)
+	auth, err := conf.Authenticator.Config.Open(conf.ServerConfig.Host, logger)
 	if err != nil {
 		logger.Sugar().Fatalf("server: %v", err)
 		return

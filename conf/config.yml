@@ -1,4 +1,5 @@
 server:
+  host: $HOST
   port: 8080
   key: $KEY
   logger:
@@ -8,7 +9,6 @@ server:
 authenticator:
   type: auth0
   config:
-    host: $HOST
     issuer: $ISSUER
     clientId: $CLIENT_ID
     clientSecret: $CLIENT_SECRET

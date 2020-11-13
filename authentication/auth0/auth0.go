@@ -16,7 +16,6 @@ import (
 )
 
 type Config struct {
-	Host         string `json:"host"`
 	Issuer       string `json:"issuer"`
 	ClientId     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
@@ -25,7 +24,7 @@ type Config struct {
 	LogoutUri    string `json:"logoutUri"`
 }
 
-func (c *Config) Open(logger *zap.Logger) (authentication.Provider, error) {
+func (c *Config) Open(host string, logger *zap.Logger) (authentication.Provider, error) {
 	ctx := context.Background()
 
 	provider, err := oidc.NewProvider(ctx, c.Issuer)
@@ -48,6 +47,7 @@ func (c *Config) Open(logger *zap.Logger) (authentication.Provider, error) {
 		Ctx:              ctx,
 		Logger:           logger,
 		config:           c,
+		host:             host,
 	}, nil
 
 }
@@ -58,6 +58,7 @@ type Auth0 struct {
 	Ctx              context.Context
 	Logger           *zap.Logger
 	config           *Config
+	host             string
 }
 
 func (a *Auth0) Login(ctx *gin.Context) {
@@ -87,7 +88,7 @@ func (a *Auth0) Login(ctx *gin.Context) {
 }
 
 func (a *Auth0) Logout(ctx *gin.Context) {
-	returnTo, err := url.Parse(a.config.Host)
+	returnTo, err := url.Parse(a.host)
 	if err != nil {
 		a.Logger.Sugar().Errorf("auth0: %v", err)
 		ctx.HTML(http.StatusInternalServerError, "index.tmpl", gin.H{

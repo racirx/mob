@@ -1,0 +1,38 @@
+<html>
+
+{{ template "header" }}
+
+<!-- Main Quill library -->
+<link href="//cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="//cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<div class="container centered">
+    <img class="avatar" src="{{ .picture }}" alt="Icon"/>
+    <h2>Welcome {{ .name }}</h2>
+    <button onclick="logout()" class="primary btn"><i class="fa fa-sign-out"></i></button>
+
+    <form method="post" id="form">
+        <div id="editor"></div>
+        <textarea id="letter" name="letter" style="display:none;"></textarea>
+        <br/>
+        <input class="secondary btn" type="submit" name="submit" value="Save Draft" />
+        <input class="primary btn" type="submit" name="submit" value="Submit" />
+    </form>
+</div>
+
+<script>
+    function logout() {
+        document.cookie = "session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        window.location = "/logout";
+    }
+
+    let quill = new Quill('#editor', {
+        theme: 'snow',
+    });
+
+    $("#form").submit(function() {
+        $("#letter").val($("#editor").html());
+    });
+</script>
+
+</html>

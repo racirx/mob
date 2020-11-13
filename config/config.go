@@ -55,6 +55,7 @@ func (l *Logger) UnmarshalJSON(b []byte) error {
 }
 
 type Server struct {
+	Host   string
 	Port   string
 	Key    string
 	Logger Logger
@@ -95,7 +96,7 @@ func (a *Authenticator) UnmarshalJSON(b []byte) error {
 }
 
 type AuthenticationConfig interface {
-	Open(logger *zap.Logger) (authentication.Provider, error)
+	Open(host string, logger *zap.Logger) (authentication.Provider, error)
 }
 
 var AuthenticatorsConfig = map[string]func() AuthenticationConfig{
