@@ -22,6 +22,10 @@ type Application struct {
 	AuthenticationProvider authentication.Provider
 }
 
+type Form struct {
+	Letter string `form:"letter" binding:"required"`
+}
+
 func (a *Application) Initialize(conf *config.Config) {
 	r := gin.New()
 
@@ -50,15 +54,26 @@ func (a *Application) Initialize(conf *config.Config) {
 	r.GET("/", func(c *gin.Context) {
 		logger.Debug("route: loading template: index")
 		sess := sessions.Default(c)
-		if sess.Get("profile") == nil {
+		profile := sess.Get("profile")
+		if profile == nil {
 			c.Redirect(http.StatusTemporaryRedirect, "/login")
 			return
 		}
 
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
-			"title": "MOB",
-		})
+		c.HTML(http.StatusOK, "index.tmpl", profile)
 		return
+	})
+
+	r.POST("/submit", func(c *gin.Context) {
+		form := new(Form)
+
+		if err := c.ShouldBind(form); err != nil {
+			logger.Sugar().Infof("post route: %v\n", err)
+			c.Redirect(http.StatusTemporaryRedirect, "/")
+			return
+		}
+
+		c.Redirect(http.StatusTemporaryRedirect, "/")
 	})
 
 	auth, err := conf.Authenticator.Config.Open(logger)
@@ -69,6 +84,9 @@ func (a *Application) Initialize(conf *config.Config) {
 
 	r.GET("/login", func(c *gin.Context) {
 		auth.Login(c)
+	})
+	r.GET("/logout", func(c *gin.Context) {
+		auth.Logout(c)
 	})
 	r.GET("/callback", func(c *gin.Context) {
 		auth.Callback(c)
