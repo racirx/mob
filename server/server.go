@@ -66,7 +66,7 @@ func (a *Application) Initialize(conf *config.Config) {
 		return
 	})
 
-	r.POST("/submit", func(c *gin.Context) {
+	r.POST("/", func(c *gin.Context) {
 		form := new(Form)
 
 		version := "final"
@@ -80,7 +80,7 @@ func (a *Application) Initialize(conf *config.Config) {
 			return
 		}
 
-		err = ioutil.WriteFile(fmt.Sprintf("letters/%s/mob_%d.txt", version, time.Now().Unix()), []byte(form.Letter), os.ModePerm)
+		err = ioutil.WriteFile(fmt.Sprintf("letters/%s/mob_%d.html", version, time.Now().Unix()), []byte(form.Letter), os.ModePerm)
 		if err != nil {
 			logger.Sugar().Errorf("post route: %v\n", err)
 			c.Redirect(http.StatusMovedPermanently, "/")
