@@ -1,13 +1,39 @@
 <html>
 
-{{if .error }}
-<div>
-    {{ .error }}
-</div>
-{{ end }}
+{{ template "header" }}
 
-<div>
-    Welcome to MOB
+<style>
+    input[type=button],
+    input[type=submit],
+    input[type=reset]{
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 16px 32px;
+        text-decoration: none;
+        cursor: pointer;
+        width: 100%;
+        font-size: 1em;
+    }
+    textarea {
+        width: 100%;
+        margin-bottom: 1em;
+    }
+</style>
+
+<div class="container centered">
+    <h3>MOB</h3>
+
+    <img class="avatar" src="{{ .picture }}"/>
+    <h2>Welcome {{ .name }}</h2>
+
+    <form action="/submit" method="post">
+        <label>
+            <textarea name="letter" cols="50" rows="25"></textarea>
+        </label>
+        <br/>
+        <input type="submit" name="submit" value="Submit" />
+    </form>
 </div>
 
 </html>
