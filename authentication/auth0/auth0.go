@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"github.com/coreos/go-oidc"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -17,6 +16,7 @@ import (
 )
 
 type Config struct {
+	Host         string `json:"host"`
 	Issuer       string `json:"issuer"`
 	ClientId     string `json:"clientId"`
 	ClientSecret string `json:"clientSecret"`
@@ -87,14 +87,7 @@ func (a *Auth0) Login(ctx *gin.Context) {
 }
 
 func (a *Auth0) Logout(ctx *gin.Context) {
-	var scheme string
-	if ctx.Request.TLS == nil {
-		scheme = "http"
-	} else {
-		scheme = "https"
-	}
-
-	returnTo, err := url.Parse(fmt.Sprintf("%s://%s", scheme, ctx.Request.Host))
+	returnTo, err := url.Parse(a.config.Host)
 	if err != nil {
 		a.Logger.Sugar().Errorf("auth0: %v", err)
 		ctx.HTML(http.StatusInternalServerError, "index.tmpl", gin.H{
